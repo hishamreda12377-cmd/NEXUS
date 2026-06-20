@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXUS ERP for Traders</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <div class="brand-mark">N</div>
+          <div>
+            <strong>NEXUS</strong>
+            <span>ERP FOR TRADERS</span>
+          </div>
+        </div>
+        <nav class="nav" id="nav"></nav>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div class="topbar-title">
+            <button class="icon-button mobile-only" id="menuToggle" aria-label="فتح القائمة">☰</button>
+            <div>
+              <span class="eyebrow">حصري</span>
+              <h1 id="pageTitle">لوحة التحكم</h1>
+            </div>
+          </div>
+          <div class="top-actions">
+            <span class="status-pill" id="storageStatus">محفوظ محليا</span>
+            <button class="icon-button" id="themeToggle" title="تبديل المظهر">◐</button>
+            <button class="primary-button" id="quickAdd">إضافة سريعة</button>
+          </div>
+        </header>
+
+        <section class="content" id="view"></section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <dialog class="modal" id="modal">
+      <form method="dialog" class="modal-card" id="modalForm">
+        <div class="modal-head">
+          <h2 id="modalTitle">إضافة</h2>
+          <button class="icon-button" value="cancel" aria-label="إغلاق">×</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-actions">
+          <button class="secondary-button" value="cancel">إلغاء</button>
+          <button class="primary-button" value="default" id="modalSave">حفظ</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus ERP System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1E293B">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+</head>
+<body class="bg-paper text-ink font-sans">
+    <!-- Top Navigation -->
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <div class="nav-menu">
+                <button id="menuToggle" class="menu-toggle">☰</button>
+                <button id="refreshBtn" class="menu-toggle" title="تحديث البيانات">🔄</button>
+                <button id="darkModeToggle" class="menu-toggle" title="الوضع الليلي" onclick="toggleDarkMode()">🌙</button>
+            </div>
+            <div class="nav-brand">
+                <h1 class="nav-title">Nexus ERP</h1>
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-content">
+                <button class="sidebar-close" id="sidebarClose">✕</button>
+                <nav class="sidebar-nav">
+                    <button class="sidebar-item active" data-view="dashboard">📊 لوحة التحكم</button>
+                    <button class="sidebar-item" data-view="inventory">📦 المخزن</button>
+                    <button class="sidebar-item" data-view="sales">🛒 المبيعات</button>
+                    <button class="sidebar-item" data-view="purchases">💰 المشتريات</button>
+                    <button class="sidebar-item" data-view="expenses">💸 المصروفات</button>
+                    <button class="sidebar-item" data-view="debts">🏦 الديون</button>
+                    <button class="sidebar-item" data-view="profits">📈 الأرباح</button>
+                    <button class="sidebar-item" data-view="directory">👥 الدليل</button>
+                    <button class="sidebar-item" data-view="reports">📋 التقارير</button>
+                    <button class="sidebar-item" data-view="settings">⚙️ الإعدادات</button>
+                    <button class="sidebar-item" data-view="trash">🗑️ سلة المحذوفات</button>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Sidebar Overlay -->
+        <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div id="dashboard" class="view active">
+                <div class="view-header">
+                    <h2>لوحة التحكم</h2>
+                </div>
+                
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #10B981, #059669);">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <div class="stat-label">إجمالي المبيعات</div>
+                            <div class="stat-value" id="totalSales">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #3B82F6, #1E40AF);">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-content">
+                            <div class="stat-label">قيمة المخزون</div>
+                            <div class="stat-value" id="stockValue">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #EF4444, #DC2626);">
+                        <div class="stat-icon">💸</div>
+                        <div class="stat-content">
+                            <div class="stat-label">المصروفات</div>
+                            <div class="stat-value" id="totalExpenses">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #6366F1, #4F46E5);">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <div class="stat-label">الربح الصافي</div>
+                            <div class="stat-value" id="netProfit">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>المبيعات ضد المشتريات (7 أيام)</h3>
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>الأرباح ضد المصروفات (7 أيام)</h3>
+                        <canvas id="profitChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory View -->
+            <div id="inventory" class="view">
+                <div class="view-header">
+                    <button class="btn-back" onclick="switchView('dashboard')">➡️ رجوع</button>
+                    <h2>المخزن</h2>
+                    <button class="btn-primary" onclick="showAddItemForm()">+ إضافة صنف</button>
+                </div>
+                <div class="search-bar">
+                    <button class="btn-secondary" onclick="exportTableToCSV('inventory')" style="flex:0 0 auto;padding:0.5rem 0.75rem;">📥 تصدير CSV</button>
+                    <input type="text" id="inventorySearch" class="form-input" placeholder="🔍 بحث في المخزن..." oninput="renderInventory()">
+                    <select id="inventoryCategoryFilter" class="form-input" onchange="renderInventory()" style="max-width:140px;">
+                        <option value="">كل التصنيفات</option>
+                        <option value="مواد خام">مواد خام</option>
+                        <option value="منتج نهائي">منتج نهائي</option>
+                        <option value="مستلزمات">مستلزمات</option>
+                        <option value="الكترونيات">الكترونيات</option>
+                        <option value="ملابس">ملابس</option>
+                        <option value="مواد غذائية">مواد غذائية</option>
+                        <option value="منظفات">منظفات</option>
+                        <option value="قرطاسية">قرطاسية</option>
+                        <option value="غير ذلك">غير ذلك</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>التصنيف</th>
+                                <th>الكمية</th>
+                                <th>الحد الأدنى</th>
+                                <th>سعر الشراء</th>
+                                <th>سعر البيع</th>
+                                <th>القيمة الإجمالية</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTable">
+                            <tr><td colspan="8" class="text-center">لا توجد بيانات</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sales View -->
+            <div id="sales" class="view">
+                <div class="view-header">
+                    <button class="btn-back" onclick="switchView('dashboard')">➡️ رجوع</button>
+                    <h2>المبيعات</h2>
+                    <div id="salesHeaderActions">
+                        <button class="btn-primary" onclick="switchSalesTab('list')">📋 القائمة</button>
+                        <button class="btn-primary" onclick="switchSalesTab('form')">+ جديد</button>
+                    </div>
+                </div>
+
+                <!-- Sales List Tab -->
+                <div id="salesListTab" class="tab-content">
+                    <div class="search-bar">
+                        <input type="text" id="salesSearch" class="form-input" placeholder="🔍 بحث في الفواتير..." oninput="renderSales()">
+                        <button class="btn-secondary" onclick="exportTableToCSV('sales')" style="flex:0 0 auto;padding:0.5rem 0.75rem;">📥 تصدير CSV</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>رقم الفاتورة</th>
+                                    <th>التاريخ</th>
+                                    <th>العميل</th>
+                                    <th>الإجمالي</th>
+                                    <th>الخصم</th>
+                                    <th>المبلغ النهائي</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTable">
+                                <tr><td colspan="7" class="text-center">لا توجد فواتير</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Sales Form Tab -->
+                <div id="salesFormTab" class="tab-content" style="display: none;">
+                    <div class="form-top-actions">
+                        <button class="btn-primary" onclick="saveSalesInvoice()">💾 حفظ</button>
+                        <button class="btn-primary btn-print-top" onclick="saveAndPrint()" style="background:#10B981;">🖨️ حفظ وطباعة</button>
+                    </div>
+                    <div class="payment-type-bar">
+                        <button type="button" id="salesPaymentCash" class="btn-payment active" onclick="setSalesPayment('cash')">💰 نقد</button>
+                        <button type="button" id="salesPaymentCredit" class="btn-payment" onclick="setSalesPayment('credit')">📝 اجل</button>
+                    </div>
+                    <div id="salesCreditFields" class="credit-fields" style="display:none;">
+                        <div class="form-group">
+                            <label>المبلغ المدفوع</label>
+                            <input type="number" id="salesPaidAmount" class="form-input" placeholder="0" onchange="updateSalesRemaining()">
+                        </div>
+                        <div class="form-group">
+                            <label>المتبقي</label>
+                            <span id="salesRemainingAmount" class="remaining-display">0</span>
+                        </div>
+                    </div>
+                    <div class="sales-form-container">
+                        <div class="sales-form-left">
+                            <div class="form-group">
+                                <label>تاريخ الفاتورة</label>
+                                <input type="date" id="newSalesDate" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>اسم العميل</label>
+                                <input type="text" id="newSalesCustomer" class="form-input" placeholder="ابحث عن عميل..." autocomplete="off" oninput="filterCustomers()">
+                                <div id="customerSearchResults" class="search-results" style="display: none; border:1px solid var(--color-gray-200);border-radius:8px;background:white;"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>البحث عن صنف</label>
+                                <input type="text" id="itemSearchInput" class="form-input" placeholder="ابحث عن صنف..." oninput="filterItemsForSales()" autocomplete="off">
+                                <div id="itemSearchResults" class="search-results" style="display: none;border:1px solid var(--color-gray-200);border-radius:8px;background:white;"></div>
+                            </div>
+                        </div>
+
+                        <div class="sales-form-right">
+                            <div class="sales-items-container">
+                                <h3>الأصناف المختارة</h3>
+                                <div id="salesItemsList" class="items-list">
+                                    <p class="empty-state">لم تختر أصنافاً حتى الآن</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-bar">
+                        <div class="summary-bar-item">
+                            <label>الإجمالي:</label>
+                            <span id="salesSubtotal">0</span>
+                        </div>
+                        <div class="summary-bar-item">
+                            <label>خصم %:</label>
+                            <input type="number" id="salesDiscountPercent" class="form-input" value="0" min="0" max="100" onchange="updateSalesTotal()" style="width:70px;">
+                        </div>
+                        <div class="summary-bar-item total">
+                            <label>المبلغ النهائي:</label>
+                            <span id="salesTotal">0</span>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:0.5rem;">
+                        <label>ملاحظات</label>
+                        <textarea id="salesNotes" class="form-input" placeholder="..." style="resize:none;height:40px;"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Purchases View -->
+            <div id="purchases" class="view">
+                <div class="view-header">
+                    <button class="btn-back" onclick="switchView('dashboard')">➡️ رجوع</button>
+                    <h2>المشتريات</h2>
+                    <div id="purchasesHeaderActions">
+                        <button class="btn-primary" onclick="switchPurchasesTab('list')">📋 القائمة</button>
+                        <button class="btn-primary" onclick="switchPurchasesTab('form')">+ جديد</button>
+                    </div>
+                </div>
+
+                <!-- Purchases List Tab -->
+                <div id="purchasesListTab" class="tab-content">
+                    <div class="search-bar">
+                        <input type="text" id="purchasesSearch" class="form-input" placeholder="🔍 بحث في المشتريات..." oninput="renderPurchases()">
+                        <button class="btn-secondary" onclick="exportTableToCSV('purchases')" style="flex:0 0 auto;padding:0.5rem 0.75rem;">📥 تصدير CSV</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>رقم الفاتورة</th>
+                                    <th>التاريخ</th>
+                                    <th>المورد</th>
+                                    <th>الإجمالي</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="purchasesTable">
+                                <tr><td colspan="5" class="text-center">لا توجد مشتريات</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Purchases Form Tab -->
+                <div id="purchasesFormTab" class="tab-content" style="display: none;">
+                    <div class="form-top-actions">
+                        <button class="btn-primary" onclick="savePurchaseOrder()">💾 حفظ</button>
+                    </div>
+                    <div class="payment-type-bar">
+                        <button type="button" id="purchasesPaymentCash" class="btn-payment active" onclick="setPurchasesPayment('cash')">💰 نقد</button>
+                        <button type="button" id="purchasesPaymentCredit" class="btn-payment" onclick="setPurchasesPayment('credit')">📝 اجل</button>
+                    </div>
+                    <div id="purchasesCreditFields" class="credit-fields" style="display:none;">
+                        <div class="form-group">
+                            <label>المبلغ المدفوع</label>
+                            <input type="number" id="purchasesPaidAmount" class="form-input" placeholder="0" onchange="updatePurchasesRemaining()">
+                        </div>
+                        <div class="form-group">
+                            <label>المتبقي</label>
+                            <span id="purchasesRemainingAmount" class="remaining-display">0</span>
+                        </div>
+                    </div>
+                    <div class="purchases-form-container">
+                        <div class="purchases-form-left">
+                            <div class="form-group">
+                                <label>تاريخ الشراء</label>
+                                <input type="date" id="newPurchaseDate" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>اسم المورد</label>
+                                <input type="text" id="newPurchaseSupplier" class="form-input" placeholder="ابحث عن مورد..." autocomplete="off" oninput="filterSuppliers()">
+                                <div id="supplierSearchResults" class="search-results" style="display: none;border:1px solid var(--color-gray-200);border-radius:8px;background:white;"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>البحث عن صنف</label>
+                                <input type="text" id="purchaseItemSearchInput" class="form-input" placeholder="ابحث عن صنف..." oninput="filterItemsForPurchases()" autocomplete="off">
+                                <div id="purchaseItemSearchResults" class="search-results" style="display: none;border:1px solid var(--color-gray-200);border-radius:8px;background:white;"></div>
+                            </div>
+                        </div>
+
+                        <div class="purchases-form-right">
+                            <div class="purchases-items-container">
+                                <h3>الأصناف المختارة</h3>
+                                <div id="purchasesItemsList" class="items-list">
+                                    <p class="empty-state">لم تختر أصنافاً حتى الآن</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-bar">
+                        <div class="summary-bar-item">
+                            <label>الإجمالي:</label>
+                            <span id="purchasesSubtotal">0</span>
+                        </div>
+                        <div class="summary-bar-item">
+                            <label>خصم %:</label>
+                            <input type="number" id="purchasesDiscountPercent" class="form-input" value="0" min="0" max="100" onchange="updatePurchasesTotal()" style="width:70px;">
+                        </div>
+                        <div class="summary-bar-item total">
+                            <label>المبلغ الإجمالي:</label>
+                            <span id="purchasesTotal">0</span>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:0.5rem;">
+                        <label>ملاحظات</label>
+                        <textarea id="purchasesNotes" class="form-input" placeholder="..." style="resize:none;height:40px;"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expenses View -->
+            <div id="expenses" class="view">
+                <div class="view-header">
+                    <button class="btn-back" onclick="switchView('dashboard')">➡️ رجوع</button>
+                    <h2>المصروفات</h2>
+                    <button class="btn-primary" onclick="showAddExpenseForm()">+ مصروف جديد</button>
+                </div>
+                <div class="search-bar">
+                    <input type="text" id="expensesSearch" class="form-input" placeholder="🔍 بحث في المصروفات..." oninput="renderExpenses()">
+                    <button class="btn-secondary" onclick="exportTableToCSV('expenses')" style="flex:0 0 auto;padding:0.5rem 0.75rem;">📥 تصدير CSV</button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الوصف</th>
+                                <th>الفئة</th>
+                                <th>المبلغ</th>
+                                <th>التاريخ</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expensesTable">
+                            <tr><td colspan="5" class="text-center">لا توجد مصروفات</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Debts View -->
+            <div id="debts" class="view">
+                <div class="view-header">
+                    <button class="btn-back" onclick="switchView('dashboard')">➡️ رجوع</button>
+                    <h2 id="debtsViewTitle">الديون</h2>
+                    <button id="debtsAddBtn" class="btn-primary" onclick="showAddDebtForm()">+ معاملة جديدة</button>
+                </div>
+                <!-- Customer List -->
+                <div id="debtsCustomerList" class="tab-content">
+                    <div class="search-bar">
+                        <input type="text" id="debtsCustomerSearch" class="form-input" placeholder="🔍 بحث في العملاء..." oninput="renderDebts()">
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>العميل</th>
+                                    <th>الهاتف</th>
+                                    <th>الرصيد</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="debtsCustomerTable">
+                                <tr><td colspan="4" class="text-center">لا توجد عملاء</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Customer Detail -->
+                <div id="debtsCustomerDetail" class="tab-content" style="display:none;">
+                    <div class="debt-balance-bar" id="debtBalanceBar">
+                        <span id="debtBalanceLabel">الفرق: </span>
+                        <span id="debtBalanceValue">0</span>
+                    </div>
+                    <div class="debt-summary-row">
+                        <span class="debt-summary-item debt-gave">💸 اعطيت: <span id="debtTotalGave">0</span></span>
+                        <span class="debt-summary-item debt-took">💰 اخذت: <span id="debtTotalTook">0</span></span>
+                    </div>
+                    <div class="table-container" style="margin-top:1rem;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>النوع</th>
+                                    <th>المبلغ</th>
+                                    <th>التاريخ</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="debtsDetailTable">
+                                <tr><td colspan="4" class="text-center">لا توجد معاملات</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profits View -->
+            <div id="profits" class="view">
+                <div class="view-header">
+                    <button class="btn-back" onclick="switchView('dashboard')">➡️ رجوع</button>
+                    <h2>الأرباح</h2>
+                </div>
+                <div class="profits-summary">
+                    <div class="profit-item">
+                        <span>الربح الإجمالي:</span>
+                        <span id="grossProfit" class="value">0</span>
+                    </div>
+                    <div class="profit-item">
+                        <span>الربح الصافي:</span>
+                        <span id="finalProfit" class="value">0</span>
+                    </div>
+                    <div class="profit-item">
+                        <span>نسبة الربح:</span>
+                        <span id="profitRatio" class="value">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Directory View -->
+            <div id="directory" class="view">
+                <div class="view-header">
+                    <button class="btn-back" onclick="switchView('dashboard')">➡️ رجوع</button>
+                    <h2>الدليل</h2>
+                    <div class="button-group">
+                        <button class="btn-secondary" onclick="switchDirectoryTab('customers')">العملاء</button>
+                        <button class="btn-secondary" onclick="switchDirectoryTab('suppliers')">الموردون</button>
+                    </div>
+                </div>
+                
+                <div id="customersTab" class="tab-content">
+                    <button class="btn-primary" onclick="showAddCustomerForm()">+ عميل جديد</button>
+                    <div class="search-bar">
+                        <input type="text" id="customersSearch" class="form-input" placeholder="🔍 بحث في العملاء..." oninput="renderCustomers()">
+                        <button class="btn-secondary" onclick="exportTableToCSV('customers')" style="flex:0 0 auto;padding:0.5rem 0.75rem;">📥 تصدير CSV</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>الهاتف</th>
+                                    <th>العنوان</th>
+                                    <th>الرصيد</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customersTable">
+                                <tr><td colspan="5" class="text-center">لا توجد عملاء</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="suppliersTab" class="tab-content" style="display: none;">
+                    <button class="btn-primary" onclick="showAddSupplierForm()">+ مورد جديد</button>
+                    <div class="search-bar">
+                        <input type="text" id="suppliersSearch" class="form-input" placeholder="🔍 بحث في الموردين..." oninput="renderSuppliers()">
+                        <button class="btn-secondary" onclick="exportTableToCSV('suppliers')" style="flex:0 0 auto;padding:0.5rem 0.75rem;">📥 تصدير CSV</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>الهاتف</th>
+                                    <th>العنوان</th>
+                                    <th>الرصيد</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="suppliersTable">
+                                <tr><td colspan="5" class="text-center">لا يوجد موردون</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports View -->
+            <div id="reports" class="view">
+                <div class="view-header">
+                    <button class="btn-back" onclick="switchView('dashboard')">➡️ رجوع</button>
+                    <h2>التقارير</h2>
+                </div>
+                <div class="report-date-range">
+                    <label>من:</label>
+                    <input type="date" id="reportDateFrom" class="form-input" onchange="renderReports()">
+                    <label>إلى:</label>
+                    <input type="date" id="reportDateTo" class="form-input" onchange="renderReports()">
+                    <button class="btn-secondary" onclick="document.getElementById('reportDateFrom').value='';document.getElementById('reportDateTo').value='';renderReports()">إعادة تعيين</button>
+                </div>
+                <div class="reports-charts">
+                    <div class="chart-container">
+                        <h3>المبيعات vs المشتريات</h3>
+                        <canvas id="reportsSalesChart" style="max-height: 250px;"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>توزيع المصروفات</h3>
+                        <canvas id="reportsExpensesChart" style="max-height: 250px;"></canvas>
+                    </div>
+                </div>
+                <div class="reports-grid">
+                    <div class="report-card">
+                        <h3>ملخص المبيعات</h3>
+                        <div id="salesSummary">-</div>
+                    </div>
+                    <div class="report-card">
+                        <h3>ملخص المشتريات</h3>
+                        <div id="purchasesSummary">-</div>
+                    </div>
+                    <div class="report-card">
+                        <h3>أكثر منتج مبيعاً</h3>
+                        <div id="topProduct">-</div>
+                    </div>
+                    <div class="report-card">
+                        <h3>أعلى عميل</h3>
+                        <div id="topCustomer">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settings" class="view">
+                <div class="view-header">
+                    <button class="btn-back" onclick="switchView('dashboard')">➡️ رجوع</button>
+                    <h2>الإعدادات</h2>
+                </div>
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label>اسم الشركة:</label>
+                        <input type="text" id="companyName" class="form-input" placeholder="أدخل اسم المشروع">
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الهاتف:</label>
+                        <input type="text" id="companyPhone" class="form-input" placeholder="أدخل رقم الهاتف">
+                    </div>
+                    <div class="form-group">
+                        <label>العنوان:</label>
+                        <input type="text" id="companyAddress" class="form-input" placeholder="أدخل العنوان">
+                    </div>
+                    <div class="form-group">
+                        <label>ملاحظة الفاتورة:</label>
+                        <textarea id="invoiceFooter" class="form-input" placeholder="ملاحظة نهاية الفاتورة"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>خيارات:</label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="deductExpenses"> خصم المصروفات من الأرباح
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="darkModeSetting" onchange="toggleDarkMode()"> الوضع الليلي 🌙
+                        </label>
+                    </div>
+                    <button class="btn-primary" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>إدارة البيانات</h3>
+                    <button class="btn-danger" onclick="exportData()">📥 تصدير البيانات</button>
+                    <button class="btn-danger" onclick="importData()">📤 استيراد البيانات</button>
+                    <button class="btn-danger" onclick="clearAllData()">🗑️ حذف جميع البيانات</button>
+                </div>
+            </div>
+
+            <!-- Trash View -->
+            <div id="trash" class="view">
+                <div class="view-header">
+                    <button class="btn-back" onclick="switchView('dashboard')">➡️ رجوع</button>
+                    <h2>🗑️ سلة المحذوفات</h2>
+                    <button class="btn-danger" onclick="emptyTrash()">🗑️ إفراغ السلة</button>
+                </div>
+                <div class="search-bar">
+                    <input type="text" id="trashSearch" class="form-input" placeholder="🔍 بحث في المحذوفات..." oninput="renderTrash()">
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>النوع</th>
+                                <th>البيان</th>
+                                <th>تاريخ الحذف</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trashTable">
+                            <tr><td colspan="4" class="text-center">سلة المحذوفات فارغة</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Dialog -->
+    <div id="modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">العنوان</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <form id="modalForm" class="modal-form"></form>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification" style="display: none;"></div>
+
+    <!-- Floating Action Menu -->
+    <div id="actionMenuOverlay" class="action-menu-overlay" onclick="closeActionMenu()">
+        <div class="action-menu-popup" onclick="event.stopPropagation()">
+            <div class="action-menu-popup-header">
+                <span>الإجراءات</span>
+                <button onclick="closeActionMenu()">✕</button>
+            </div>
+            <div id="actionMenuItems"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
